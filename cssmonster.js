@@ -16,7 +16,7 @@ const packageJson = require(path.join(__dirname, "package.json"));
 const version = packageJson.engines.node;
 if (!semver.satisfies(process.version, version)) {
     const rawVersion = version.replace(/[^\d\.]*/, "");
-    console.log(`CSSMonster requires at least Node v${rawVersion} and you're using Node v${process.version}`);
+    console.log(`CSSMonster requires at least Node v${rawVersion} and you're using Node ${process.version}`);
     process.exit(1);
 }
 
@@ -75,7 +75,7 @@ class CSSMonster {
         });
     }
 
-    config() {
+    handleConfig() {
         return new Promise((resolve, reject) => {
             if (!config) {
                 resolve();
@@ -95,9 +95,9 @@ class CSSMonster {
                     this.config.sources = [path.resolve(cwd, config.sources)];
                 } else if (Array.isArray(config.sources)) {
                     this.config.sources = [];
-                    for (let i = 0; i < config.sources; i++) {
-                        const path = path.resolve(cwd, config.sources[i]);
-                        this.config.sources.push(path);
+                    for (let i = 0; i < config.sources.length; i++) {
+                        const srcPath = path.resolve(cwd, config.sources[i]);
+                        this.config.sources.push(srcPath);
                     }
                 } else {
                     reject("Incorrect configuration: sources must be a string or an array of strings.");
@@ -137,14 +137,16 @@ class CSSMonster {
                     this.config.blacklist = [path.resolve(cwd, config.blacklist)];
                 } else if (Array.isArray(config.blacklist)) {
                     this.config.blacklist = [];
-                    for (let i = 0; i < config.blacklist; i++) {
-                        const path = path.resolve(cwd, config.blacklist[i]);
-                        this.config.blacklist.push(path);
+                    for (let i = 0; i < config.blacklist.length; i++) {
+                        const filePath = path.resolve(cwd, config.blacklist[i]);
+                        this.config.blacklist.push(filePath);
                     }
                 } else {
                     reject("Incorrect configuration: blacklist must be a string or an array of strings.");
                 }
             }
+
+            resolve();
         });
     }
 
@@ -155,15 +157,14 @@ class CSSMonster {
             }
             const cleanFiles = [];
             for (let i = 0; i < files.length; i++) {
-                let clean = true;
+                let allowed = true;
                 for (let k = 0; k < this.config.blacklist.length; k++) {
-                    const pathname = path.normalize(`/${this.config.blacklist[k]}/`);
-                    if (new RegExp(pathname, "gi").test(files[i])) {
-                        clean = false;
+                    if (new RegExp(this.config.blacklist[k]).test(files[i])) {
+                        allowed = false;
                         break;
                     }
                 }
-                if (clean) {
+                if (allowed) {
                     cleanFiles.push(files[i]);
                 }
             }
@@ -177,7 +178,7 @@ class CSSMonster {
                 reject("Missing source paths.");
             }
             let files = [];
-            for (let i = 0; i < this.config.sources; i++) {
+            for (let i = 0; i < this.config.sources.length; i++) {
                 const newFiles = glob.sync(`${this.config.sources[i]}/**/*.css`);
                 files = [...files, ...newFiles];
             }
@@ -192,7 +193,7 @@ class CSSMonster {
             }
             let moved = 0;
             for (let i = 0; i < files.length; i++) {
-                const filename = files[i].replace(/(.*\/)|(.*\\)/);
+                const filename = files[i].replace(/(.*\/)|(.*\\)/, "");
                 if (this.config.minify) {
                     minify(files[i])
                         .then(css => {
@@ -230,7 +231,7 @@ class CSSMonster {
                 reject("Missing source paths.");
             }
             let files = [];
-            for (let i = 0; i < this.config.sources; i++) {
+            for (let i = 0; i < this.config.sources.length; i++) {
                 const newFiles = glob.sync(`${this.config.sources[i]}/**/*.scss`);
                 files = [...files, ...newFiles];
             }
@@ -255,7 +256,7 @@ class CSSMonster {
                         if (error) {
                             reject(`SCSS Error: ${error.message} at line ${error.line} ${error.file}`);
                         } else {
-                            let fileName = result.stats.entry.replace(/(.*\/)|(.*\\)/).replace(/(.scss)$/g, "");
+                            let fileName = result.stats.entry.replace(/(.*\/)|(.*\\)/, "").replace(/(.scss)$/g, "");
                             if (fileName) {
                                 const newFile = `${this.tempDir}/${fileName}.css`;
                                 fs.writeFile(newFile, result.css.toString(), error => {
@@ -277,15 +278,20 @@ class CSSMonster {
         });
     }
 
-    purgeCSS() {
+    commenceThePurge() {
         return new Promise((resolve, reject) => {
             const purgeCSSConfig = this.config.purgeCSS;
+            let normalizedContentPaths = [];
+            for (let i = 0; i < purgeCSSConfig.content.length; i++) {
+                const fullPath = path.resolve(cwd, purgeCSSConfig.content[i]);
+                normalizedContentPaths.push(fullPath);
+            }
+            purgeCSSConfig.content = normalizedContentPaths;
             purgeCSSConfig.css = [`${this.tempDir}/**/*.css`];
             const purgeCss = new Purgecss(purgeCSSConfig);
             const purgecssResult = purgeCss.purge();
             let purged = 0;
             purgecssResult.forEach(result => {
-                const filename = result.file.replace(/(.*\/)|(.*\\)/, "");
                 fs.unlink(result.file, error => {
                     if (error) {
                         reject(error);
@@ -332,27 +338,35 @@ class CSSMonster {
             /** Preflight */
             console.log("Running CSSMonster");
             await this.reset();
-            await this.config();
+            console.log("Updating Config");
+            await this.handleConfig();
 
             /** Handle CSS */
+            console.log("Managing CSS");
             let cssFiles = await this.getCSSFiles();
             cssFiles = await this.removeIgnored(cssFiles);
             await this.copyCSS(cssFiles);
 
             /** Handle SCSS */
+            console.log("Collecting SCSS");
             let scssFiles = await this.getSCSSFiles();
             scssFiles = await this.removeIgnored(scssFiles);
+            console.log("Compiling CSS");
             await this.compileSCSS(scssFiles);
 
             /** PurgeCSS */
-            await prugeCSS();
+            console.log("Purging CSS");
+            await this.commenceThePurge();
 
             /** Deliver CSS */
-            await deliverCSS();
+            console.log("Delivering CSS");
+            await this.deliverCSS();
 
             /** Finalize */
+            console.log("Finalizing");
             await this.cleanup();
 
+            console.log("CSSMonster finished");
             process.exit(0);
         } catch (error) {
             console.log("\n");
