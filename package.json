@@ -17,6 +17,7 @@
     ],
     "dependencies": {
         "glob": "^7.1.6",
+        "minify": "^5.0.0",
         "node-sass": "^4.13.0",
         "normalize.css": "^8.0.1",
         "semver": "^7.1.1",

@@ -6,6 +6,8 @@ const glob = require("glob");
 const semver = require("semver");
 const sass = require("node-sass");
 const yargs = require("yargs").argv;
+const minify = require("minify");
+const Purgecss = require("purgecss");
 
 const cwd = process.cwd();
 
@@ -54,6 +56,7 @@ class CSSMonster {
             purgeCSS: {
                 content: [path.resolve(cwd, "**/*.html")],
             },
+            blacklist: [],
         };
         this.run();
     }
@@ -89,12 +92,12 @@ class CSSMonster {
             /** Update sources array */
             if (typeof config.sources !== "undefined") {
                 if (typeof config.sources === "string") {
-                    this.config.outDir = path.resolve(cwd, config.outDir);
+                    this.config.sources = [path.resolve(cwd, config.sources)];
                 } else if (Array.isArray(config.sources)) {
-                    this.config.outDir = [];
+                    this.config.sources = [];
                     for (let i = 0; i < config.sources; i++) {
                         const path = path.resolve(cwd, config.sources[i]);
-                        this.config.outDir.push(path);
+                        this.config.sources.push(path);
                     }
                 } else {
                     reject("Incorrect configuration: sources must be a string or an array of strings.");
@@ -127,14 +130,229 @@ class CSSMonster {
                     reject("Incorrect configuration: purgeCSS must be a purgeCSS config object. See https://www.purgecss.com/configuration#options for additional information.");
                 }
             }
+
+            /** Update sources array */
+            if (typeof config.blacklist !== "undefined") {
+                if (typeof config.blacklist === "string") {
+                    this.config.blacklist = [path.resolve(cwd, config.blacklist)];
+                } else if (Array.isArray(config.blacklist)) {
+                    this.config.blacklist = [];
+                    for (let i = 0; i < config.blacklist; i++) {
+                        const path = path.resolve(cwd, config.blacklist[i]);
+                        this.config.blacklist.push(path);
+                    }
+                } else {
+                    reject("Incorrect configuration: blacklist must be a string or an array of strings.");
+                }
+            }
+        });
+    }
+
+    removeIgnored(files) {
+        return new Promise(resolve => {
+            if (!files.length || !this.config.blacklist.length) {
+                resolve(files);
+            }
+            const cleanFiles = [];
+            for (let i = 0; i < files.length; i++) {
+                let clean = true;
+                for (let k = 0; k < this.config.blacklist.length; k++) {
+                    const pathname = path.normalize(`/${this.config.blacklist[k]}/`);
+                    if (new RegExp(pathname, "gi").test(files[i])) {
+                        clean = false;
+                        break;
+                    }
+                }
+                if (clean) {
+                    cleanFiles.push(files[i]);
+                }
+            }
+            resolve(cleanFiles);
+        });
+    }
+
+    getCSSFiles() {
+        return new Promise((resolve, reject) => {
+            if (!this.config.sources.length) {
+                reject("Missing source paths.");
+            }
+            let files = [];
+            for (let i = 0; i < this.config.sources; i++) {
+                const newFiles = glob.sync(`${this.config.sources[i]}/**/*.css`);
+                files = [...files, ...newFiles];
+            }
+            resolve(files);
+        });
+    }
+
+    copyCSS(files) {
+        return new Promise((resolve, reject) => {
+            if (!files.length) {
+                resolve();
+            }
+            let moved = 0;
+            for (let i = 0; i < files.length; i++) {
+                const filename = files[i].replace(/(.*\/)|(.*\\)/);
+                if (this.config.minify) {
+                    minify(files[i])
+                        .then(css => {
+                            fs.writeFile(`${this.tempDir}/${filename}`, css, error => {
+                                if (error) {
+                                    reject(error);
+                                }
+                                moved++;
+                                if (moved === files.length) {
+                                    resolve();
+                                }
+                            });
+                        })
+                        .catch(error => {
+                            reject(error);
+                        });
+                } else {
+                    fs.copyFile(files[i], `${this.tempDir}/${filename}`, error => {
+                        if (error) {
+                            reject(error);
+                        }
+                        moved++;
+                        if (moved === files.length) {
+                            resolve();
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    getSCSSFiles() {
+        return new Promise((resolve, reject) => {
+            if (!this.config.sources.length) {
+                reject("Missing source paths.");
+            }
+            let files = [];
+            for (let i = 0; i < this.config.sources; i++) {
+                const newFiles = glob.sync(`${this.config.sources[i]}/**/*.scss`);
+                files = [...files, ...newFiles];
+            }
+            resolve(files);
+        });
+    }
+
+    compileSCSS(files) {
+        return new Promise((resolve, reject) => {
+            if (!files.length) {
+                resolve();
+            }
+            let compiled = 0;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                sass.render(
+                    {
+                        file: file,
+                        outputStyle: this.config.minify ? "compressed" : "expanded",
+                    },
+                    (error, result) => {
+                        if (error) {
+                            reject(`SCSS Error: ${error.message} at line ${error.line} ${error.file}`);
+                        } else {
+                            let fileName = result.stats.entry.replace(/(.*\/)|(.*\\)/).replace(/(.scss)$/g, "");
+                            if (fileName) {
+                                const newFile = `${this.tempDir}/${fileName}.css`;
+                                fs.writeFile(newFile, result.css.toString(), error => {
+                                    if (error) {
+                                        reject("Something went wrong saving the file" + error);
+                                    }
+                                    compiled++;
+                                    if (compiled === files.length) {
+                                        resolve();
+                                    }
+                                });
+                            } else {
+                                reject("Something went wrong with the file name of " + result.stats.entry);
+                            }
+                        }
+                    }
+                );
+            }
+        });
+    }
+
+    purgeCSS() {
+        return new Promise((resolve, reject) => {
+            const purgeCSSConfig = this.config.purgeCSS;
+            purgeCSSConfig.css = [`${this.tempDir}/**/*.css`];
+            const purgeCss = new Purgecss(purgeCSSConfig);
+            const purgecssResult = purgeCss.purge();
+            let purged = 0;
+            purgecssResult.forEach(result => {
+                const filename = result.file.replace(/(.*\/)|(.*\\)/, "");
+                fs.unlink(result.file, error => {
+                    if (error) {
+                        reject(error);
+                    }
+                    fs.writeFile(result.file, result.css, error => {
+                        if (error) {
+                            reject(error);
+                        }
+                        purged++;
+                        if (purged === purgecssResult.length) {
+                            resolve();
+                        }
+                    });
+                });
+            });
+        });
+    }
+
+    deliverCSS() {
+        return new Promise((resolve, reject) => {
+            if (fs.existsSync(this.config.outDir)) {
+                fs.rmdirSync(this.config.outDir, { recursive: true });
+            }
+            fs.rename(this.tempDir, this.config.outDir, error => {
+                if (error) {
+                    reject(error);
+                }
+                resolve();
+            });
+        });
+    }
+
+    cleanup() {
+        return new Promise(resolve => {
+            if (fs.existsSync(this.tempDir)) {
+                fs.rmdirSync(this.tempDir, { recursive: true });
+            }
+            resolve();
         });
     }
 
     async run() {
         try {
+            /** Preflight */
             console.log("Running CSSMonster");
             await this.reset();
             await this.config();
+
+            /** Handle CSS */
+            let cssFiles = await this.getCSSFiles();
+            cssFiles = await this.removeIgnored(cssFiles);
+            await this.copyCSS(cssFiles);
+
+            /** Handle SCSS */
+            let scssFiles = await this.getSCSSFiles();
+            scssFiles = await this.removeIgnored(scssFiles);
+            await this.compileSCSS(scssFiles);
+
+            /** PurgeCSS */
+            await prugeCSS();
+
+            /** Deliver CSS */
+            await deliverCSS();
+
+            /** Finalize */
+            await this.cleanup();
+
             process.exit(0);
         } catch (error) {
             console.log("\n");
