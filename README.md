@@ -6,13 +6,13 @@ Requries Nodejs version [12.10.0](https://nodejs.org/en/download/) or later.
 
 ## Installation
 
-Install the package:
+Install:
 
 ```bash
 npm i --save cssmonster
 ```
 
-Add the build script:
+Prepare the npm script:
 
 ```json
 "scripts": {
@@ -20,7 +20,7 @@ Add the build script:
 }
 ```
 
-Setup the config file:
+Add the config file:
 
 #### cssmonster.config.js
 
