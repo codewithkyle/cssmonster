@@ -40,8 +40,6 @@ if (configFile) {
 }
 
 const config = require(configPath) || null;
-const normalizePath = path.resolve(cwd, "node_modules/normalize.css/normalize.css");
-const preflightPath = path.join(__dirname, "preflight.css");
 let mode = yargs.e || yargs.env || "production";
 
 /** Output CSS */
@@ -118,11 +116,6 @@ class CSSMonster {
                 }
             }
 
-            /** Set minify based on env */
-            if (this.config.env === "dev" || this.config.env === "development") {
-                this.config.minify = false;
-            }
-
             /** Set purgeCSS options */
             if (typeof config.purgeCSS !== "undefined") {
                 if (typeof config.purgeCSS === "object") {
@@ -147,12 +140,19 @@ class CSSMonster {
                 }
             }
 
+            /** Purge */
             if (typeof config.purge !== "undefined") {
                 if (typeof config.purge === "boolean") {
                     this.config.purge = config.purge;
+                } else {
+                    reject("Incorrect configuration: purge must be a boolean.");
                 }
-            } else {
-                reject("Incorrect configuration: purge must be a boolean.");
+            }
+
+            /** Set values based on env */
+            if (this.config.env === "dev" || this.config.env === "development") {
+                this.config.minify = false;
+                this.config.purge = false;
             }
 
             resolve();
@@ -231,6 +231,28 @@ class CSSMonster {
                     });
                 }
             }
+        });
+    }
+
+    normalizeCSS() {
+        return new Promise((resolve, reject) => {
+            let data = "";
+            if (fs.existsSync(`${this.tempDir}/normalize.css`)) {
+                data = fs.readFileSync(`${this.tempDir}/normalize.css`).toString();
+            }
+            const normalizePath = path.resolve(cwd, "node_modules/normalize.css/normalize.css");
+            const preflightPath = path.join(__dirname, "preflight.css");
+            data += fs.readFileSync(normalizePath).toString();
+            data += fs.readFileSync(preflightPath).toString();
+            if (fs.existsSync(`${this.tempDir}/normalize.css`)) {
+                fs.unlinkSync(`${this.tempDir}/normalize.css`);
+            }
+            fs.writeFile(`${this.tempDir}/normalize.css`, data, error => {
+                if (error) {
+                    reject(error);
+                }
+                resolve();
+            });
         });
     }
 
@@ -362,6 +384,9 @@ class CSSMonster {
             scssFiles = await this.removeIgnored(scssFiles);
             console.log("Compiling CSS");
             await this.compileSCSS(scssFiles);
+
+            /** Normalize */
+            await this.normalizeCSS();
 
             /** PurgeCSS */
             if (this.config.purge) {
