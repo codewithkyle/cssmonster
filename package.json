@@ -24,8 +24,5 @@
         "purgecss": "^1.4.2",
         "semver": "^7.1.1",
         "yargs": "^15.1.0"
-    },
-    "publishConfig": {
-        "registry": "https://npm.pkg.github.com/"
     }
 }
