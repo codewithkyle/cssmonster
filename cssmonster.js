@@ -8,6 +8,7 @@ const sass = require("node-sass");
 const yargs = require("yargs").argv;
 const minify = require("minify");
 const Purgecss = require("purgecss");
+const ora = require("ora");
 
 const cwd = process.cwd();
 
@@ -365,24 +366,24 @@ class CSSMonster {
     }
 
     async run() {
+        const spinner = ora("Running CSSMonster").start();
         try {
             /** Preflight */
-            console.log("Running CSSMonster");
             await this.reset();
-            console.log("Updating Config");
+            spinner.text = "Updating Config";
             await this.handleConfig();
 
             /** Handle CSS */
-            console.log("Managing CSS");
+            spinner.text = "Managing CSS";
             let cssFiles = await this.getCSSFiles();
             cssFiles = await this.removeIgnored(cssFiles);
             await this.copyCSS(cssFiles);
 
             /** Handle SCSS */
-            console.log("Collecting SCSS");
+            spinner.text = "Collecting SCSS";
             let scssFiles = await this.getSCSSFiles();
             scssFiles = await this.removeIgnored(scssFiles);
-            console.log("Compiling CSS");
+            spinner.text = "Compiling CSS";
             await this.compileSCSS(scssFiles);
 
             /** Normalize */
@@ -390,23 +391,22 @@ class CSSMonster {
 
             /** PurgeCSS */
             if (this.config.purge) {
-                console.log("Purging CSS");
+                spinner.text = "Purging CSS";
                 await this.commenceThePurge();
             }
 
             /** Deliver CSS */
-            console.log("Delivering CSS");
+            spinner.text = "Delivering CSS";
             await this.deliverCSS();
 
             /** Finalize */
-            console.log("Finalizing");
+            spinner.text = "Finalizing";
             await this.cleanup();
 
-            console.log("CSSMonster finished");
+            spinner.succeed("CSSMonster");
             process.exit(0);
         } catch (error) {
-            console.log("\n");
-            console.log(error);
+            spinner.fail(error);
             console.log("\n");
             process.exit(1);
         }

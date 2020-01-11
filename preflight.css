@@ -32,6 +32,10 @@ ul {
     margin: 0;
     padding: 0;
 }
+ol li,
+ul li {
+    list-style-position: inside;
+}
 
 /* Images and other replaced elements are set as block level elements */
 img,
@@ -49,6 +53,19 @@ object {
 *,
 *::before,
 *::after {
-    border-width: 0;
-    border-style: solid;
+    border: none;
+    position: relative;
+    box-sizing: border-box;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/** Resets button styles */
+button
+{
+    cursor: pointer;
+    background: transparent;
+    user-select: none;
+    font-size: inherit;
+    font-weight: inherit;
 }
