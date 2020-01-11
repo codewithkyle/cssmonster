@@ -69,3 +69,9 @@ The `--env` flag will override the config `env` value.
     --env       # development | dev | production
     --config    # Path to config file
 ```
+
+## Normalize CSS
+
+This project adds [normalzie.css](https://github.com/necolas/normalize.css) and a custom [preflight.css](https://github.com/codewithkyle/cssmonster/blob/master/preflight.css) output as a single file named `normalize.css`
+
+Developers can extend the file by creating their own `normalize.css` or `normalize.scss` file within one of the provided source directories. The file will be merged with the the other CSS files.
