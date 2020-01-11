@@ -53,6 +53,7 @@ class CSSMonster {
             outDir: path.resolve(cwd, "cssmonster"),
             sources: [path.resolve(cwd, "src")],
             minify: true,
+            purge: true,
             purgeCSS: {
                 content: [path.resolve(cwd, "**/*.html")],
             },
@@ -144,6 +145,14 @@ class CSSMonster {
                 } else {
                     reject("Incorrect configuration: blacklist must be a string or an array of strings.");
                 }
+            }
+
+            if (typeof config.purge !== "undefined") {
+                if (typeof config.purge === "boolean") {
+                    this.config.purge = config.purge;
+                }
+            } else {
+                reject("Incorrect configuration: purge must be a boolean.");
             }
 
             resolve();
@@ -355,8 +364,10 @@ class CSSMonster {
             await this.compileSCSS(scssFiles);
 
             /** PurgeCSS */
-            console.log("Purging CSS");
-            await this.commenceThePurge();
+            if (this.config.purge) {
+                console.log("Purging CSS");
+                await this.commenceThePurge();
+            }
 
             /** Deliver CSS */
             console.log("Delivering CSS");
