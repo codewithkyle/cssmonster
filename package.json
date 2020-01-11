@@ -1,24 +1,25 @@
 {
-  "name": "cssmonster",
-  "version": "0.1.0",
-  "description": "A SASS and Purgecss compiler utility library.",
-  "main": "cssmonster.js",
-  "author": "Kyle Andrews",
-  "license": "GPL-3.0",
-  "bin": {
-    "cssmonster": "./cssmonster.js"
-  },
-  "engines": {
-    "node": ">=12.14.0"
-  },
-  "files": [
-    "cssmonster.js"
-  ],
-  "dependencies": {
-    "glob": "^7.1.6",
-    "node-sass": "^4.13.0",
-    "normalize.css": "^8.0.1",
-    "semver": "^7.1.1",
-    "yargs": "^15.1.0"
-  }
+    "name": "cssmonster",
+    "version": "0.1.0",
+    "description": "CSSMonster helps developers manage normalize.css, node-sass, and purgeCSS with ease.",
+    "main": "cssmonster.js",
+    "author": "Kyle Andrews",
+    "license": "GPL-3.0",
+    "bin": {
+        "cssmonster": "./cssmonster.js"
+    },
+    "engines": {
+        "node": ">=12.14.0"
+    },
+    "files": [
+        "cssmonster.js",
+        "preflight.css"
+    ],
+    "dependencies": {
+        "glob": "^7.1.6",
+        "node-sass": "^4.13.0",
+        "normalize.css": "^8.0.1",
+        "semver": "^7.1.1",
+        "yargs": "^15.1.0"
+    }
 }
