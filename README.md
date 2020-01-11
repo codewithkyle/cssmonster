@@ -1,6 +1,6 @@
 # CSSMonster
 
-CSSMonster helps developers manage normalize.css, node-sass, and purgeCSS with ease.
+CSSMonster helps developers manage [normalize.css](https://www.npmjs.com/package/normalize.css?activeTab=versions), [node-sass](https://www.npmjs.com/package/node-sass), and [purgeCSS](https://www.npmjs.com/package/purgecss) with ease. Minimum required Nodejs version [12.10.0](https://nodejs.org/en/download/).
 
 ## Installation
 
@@ -58,3 +58,12 @@ module.exports = {
 ```
 
 > Note: `purgeCSS` accepts the purgecss options object. See https://www.purgecss.com/configuration#options for additional information.
+
+## CLI Flags
+
+The `--env` flag will override the config `env` value.
+
+```bash
+    --env       # development | dev | production
+    --config    # Path to config file
+```
