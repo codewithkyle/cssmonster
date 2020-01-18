@@ -150,6 +150,15 @@ class CSSMonster {
                 }
             }
 
+            /** Minify */
+            if (typeof config.minify !== "undefined") {
+                if (typeof config.minify === "boolean") {
+                    this.config.minify = config.minify;
+                } else {
+                    reject("Incorrect configuration: minify must be a boolean.");
+                }
+            }
+
             /** Set values based on env */
             if (this.config.env === "dev" || this.config.env === "development") {
                 this.config.minify = false;
@@ -199,38 +208,20 @@ class CSSMonster {
     copyCSS(files) {
         return new Promise((resolve, reject) => {
             if (!files.length) {
-                resolve();
+                resolve(files);
             }
-            let moved = 0;
+            const movedFiles = [];
             for (let i = 0; i < files.length; i++) {
                 const filename = files[i].replace(/(.*\/)|(.*\\)/, "");
-                if (this.config.minify) {
-                    minify(files[i])
-                        .then(css => {
-                            fs.writeFile(`${this.tempDir}/${filename}`, css, error => {
-                                if (error) {
-                                    reject(error);
-                                }
-                                moved++;
-                                if (moved === files.length) {
-                                    resolve();
-                                }
-                            });
-                        })
-                        .catch(error => {
-                            reject(error);
-                        });
-                } else {
-                    fs.copyFile(files[i], `${this.tempDir}/${filename}`, error => {
-                        if (error) {
-                            reject(error);
-                        }
-                        moved++;
-                        if (moved === files.length) {
-                            resolve();
-                        }
-                    });
-                }
+                fs.copyFile(files[i], `${this.tempDir}/${filename}`, error => {
+                    if (error) {
+                        reject(error);
+                    }
+                    movedFiles.push(`${this.tempDir}/${filename}`);
+                    if (movedFiles.length === files.length) {
+                        resolve(movedFiles);
+                    }
+                });
             }
         });
     }
@@ -274,15 +265,15 @@ class CSSMonster {
     compileSCSS(files) {
         return new Promise((resolve, reject) => {
             if (!files.length) {
-                resolve();
+                resolve(files);
             }
-            let compiled = 0;
+            const compiledFiles = [];
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 sass.render(
                     {
                         file: file,
-                        outputStyle: this.config.minify ? "compressed" : "expanded",
+                        outputStyle: "expanded",
                     },
                     (error, result) => {
                         if (error) {
@@ -295,9 +286,9 @@ class CSSMonster {
                                     if (error) {
                                         reject("Something went wrong saving the file" + error);
                                     }
-                                    compiled++;
-                                    if (compiled === files.length) {
-                                        resolve();
+                                    compiledFiles.push(newFile);
+                                    if (compiledFiles.length === files.length) {
+                                        resolve(compiledFiles);
                                     }
                                 });
                             } else {
@@ -307,6 +298,41 @@ class CSSMonster {
                     }
                 );
             }
+        });
+    }
+
+    minifyCSSFiles() {
+        return new Promise((resolve, reject) => {
+            glob(`${this.tempDir}/*.css`, (error, files) => {
+                if (error) {
+                    reject(error);
+                } else if (!files.length || !this.config.minify) {
+                    resolve();
+                }
+                let minified = 0;
+                for (let i = 0; i < files.length; i++) {
+                    minify(files[i])
+                        .then(css => {
+                            fs.unlink(files[i], error => {
+                                if (error) {
+                                    reject(error);
+                                }
+                                fs.writeFile(files[i], css, error => {
+                                    if (error) {
+                                        reject(error);
+                                    }
+                                    minified++;
+                                    if (minified === files.length) {
+                                        resolve();
+                                    }
+                                });
+                            });
+                        })
+                        .catch(error => {
+                            reject(error);
+                        });
+                }
+            });
         });
     }
 
@@ -322,7 +348,7 @@ class CSSMonster {
             purgeCSSConfig.css = [`${this.tempDir}/**/*.css`];
             const purgeCss = new Purgecss(purgeCSSConfig);
             const purgecssResult = purgeCss.purge();
-            let purged = 0;
+            const purgedFiles = [];
             purgecssResult.forEach(result => {
                 fs.unlink(result.file, error => {
                     if (error) {
@@ -332,9 +358,9 @@ class CSSMonster {
                         if (error) {
                             reject(error);
                         }
-                        purged++;
-                        if (purged === purgecssResult.length) {
-                            resolve();
+                        purgedFiles.push(result.file);
+                        if (purgedFiles.length === purgecssResult.length) {
+                            resolve(purgedFiles);
                         }
                     });
                 });
@@ -377,14 +403,14 @@ class CSSMonster {
             spinner.text = "Managing CSS";
             let cssFiles = await this.getCSSFiles();
             cssFiles = await this.removeIgnored(cssFiles);
-            await this.copyCSS(cssFiles);
+            const copiedCSSFiles = await this.copyCSS(cssFiles);
 
             /** Handle SCSS */
             spinner.text = "Collecting SCSS";
             let scssFiles = await this.getSCSSFiles();
             scssFiles = await this.removeIgnored(scssFiles);
-            spinner.text = "Compiling CSS";
-            await this.compileSCSS(scssFiles);
+            spinner.text = "Compiling SCSS";
+            const compiledFiles = await this.compileSCSS(scssFiles);
 
             /** Normalize */
             await this.normalizeCSS();
@@ -393,6 +419,12 @@ class CSSMonster {
             if (this.config.purge) {
                 spinner.text = "Purging CSS";
                 await this.commenceThePurge();
+            }
+
+            /** Handle Minify */
+            if (this.config.minify) {
+                spinner.text = "Minifying CSS";
+                await this.minifyCSSFiles();
             }
 
             /** Deliver CSS */
@@ -406,6 +438,7 @@ class CSSMonster {
             spinner.succeed("CSSMonster");
             process.exit(0);
         } catch (error) {
+            console.log(error);
             spinner.fail(error);
             console.log("\n");
             process.exit(1);

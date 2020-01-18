@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+-   No longer using `compressed` output because it was stripping comments needed to temporarily disable purgeCSS
+-   CSSMonster wasn't using the `minify` boolean provided in the config file
+
 ## [0.1.0] - 2020-01-11
 
 ### Added
