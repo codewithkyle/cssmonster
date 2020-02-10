@@ -7,8 +7,8 @@ const semver = require("semver");
 const sass = require("node-sass");
 const yargs = require("yargs").argv;
 const minify = require("minify");
-const Purgecss = require("purgecss");
 const ora = require("ora");
+const PurgeCSS = require("purgecss").PurgeCSS;
 
 const cwd = process.cwd();
 
@@ -232,7 +232,7 @@ class CSSMonster {
             if (fs.existsSync(`${this.tempDir}/normalize.css`)) {
                 data = fs.readFileSync(`${this.tempDir}/normalize.css`).toString();
             }
-            const normalizePath = path.resolve(cwd, "node_modules/normalize.css/normalize.css");
+            const normalizePath = path.resolve(__dirname, "node_modules/normalize.css/normalize.css");
             const preflightPath = path.join(__dirname, "preflight.css");
             data += fs.readFileSync(normalizePath).toString();
             data += fs.readFileSync(preflightPath).toString();
@@ -336,33 +336,30 @@ class CSSMonster {
         });
     }
 
-    commenceThePurge() {
-        return new Promise((resolve, reject) => {
-            const purgeCSSConfig = this.config.purgeCSS;
-            let normalizedContentPaths = [];
-            for (let i = 0; i < purgeCSSConfig.content.length; i++) {
-                const fullPath = path.resolve(cwd, purgeCSSConfig.content[i]);
-                normalizedContentPaths.push(fullPath);
-            }
-            purgeCSSConfig.content = normalizedContentPaths;
-            purgeCSSConfig.css = [`${this.tempDir}/**/*.css`];
-            const purgeCss = new Purgecss(purgeCSSConfig);
-            const purgecssResult = purgeCss.purge();
-            const purgedFiles = [];
-            purgecssResult.forEach(result => {
-                fs.unlink(result.file, error => {
+    async commenceThePurge() {
+        const purgeCSSConfig = this.config.purgeCSS;
+        let normalizedContentPaths = [];
+        for (let i = 0; i < purgeCSSConfig.content.length; i++) {
+            const fullPath = path.resolve(cwd, purgeCSSConfig.content[i]);
+            normalizedContentPaths.push(fullPath);
+        }
+        purgeCSSConfig.content = normalizedContentPaths;
+        purgeCSSConfig.css = [`${this.tempDir}/**/*.css`];
+        const purgecssResult = await new PurgeCSS().purge(purgeCSSConfig);
+        const purgedFiles = [];
+        purgecssResult.forEach(result => {
+            fs.unlink(result.file, error => {
+                if (error) {
+                    throw error;
+                }
+                fs.writeFile(result.file, result.css, error => {
                     if (error) {
-                        reject(error);
+                        throw error;
                     }
-                    fs.writeFile(result.file, result.css, error => {
-                        if (error) {
-                            reject(error);
-                        }
-                        purgedFiles.push(result.file);
-                        if (purgedFiles.length === purgecssResult.length) {
-                            resolve(purgedFiles);
-                        }
-                    });
+                    purgedFiles.push(result.file);
+                    if (purgedFiles.length === purgecssResult.length) {
+                        return purgedFiles;
+                    }
                 });
             });
         });
