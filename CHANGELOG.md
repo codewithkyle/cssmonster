@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+-   updated purgeCSS to v2 [#3](https://github.com/codewithkyle/cssmonster/issues/3)
+-   ability to include node-sass paths [#4](https://github.com/codewithkyle/cssmonster/issues/4)
+
 ## [0.1.1] - 2020-01-18
 
 ### Fixed

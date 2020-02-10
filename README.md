@@ -56,6 +56,7 @@ module.exports = {
         content: ["**/*.html"],
     },
     blacklist: [],
+    include: [], // Paths that will be included while compiling the SCSS
 };
 ```
 

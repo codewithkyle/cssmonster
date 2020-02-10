@@ -57,6 +57,7 @@ class CSSMonster {
                 content: [path.resolve(cwd, "**/*.html")],
             },
             blacklist: [],
+            include: [],
         };
         this.run();
     }
@@ -165,6 +166,19 @@ class CSSMonster {
                 this.config.purge = false;
             }
 
+            /** Included paths */
+            if (typeof this.config.include !== "undefined") {
+                if (typeof config.include === "string") {
+                    this.config.include = [path.resolve(cwd, config.include)];
+                } else if (Array.isArray(config.include)) {
+                    this.config.include = [];
+                    for (let i = 0; i < config.include.length; i++) {
+                        const filePath = path.resolve(cwd, config.include[i]);
+                        this.config.include.push(filePath);
+                    }
+                }
+            }
+
             resolve();
         });
     }
@@ -232,7 +246,7 @@ class CSSMonster {
             if (fs.existsSync(`${this.tempDir}/normalize.css`)) {
                 data = fs.readFileSync(`${this.tempDir}/normalize.css`).toString();
             }
-            const normalizePath = path.resolve(__dirname, "node_modules/normalize.css/normalize.css");
+            const normalizePath = path.resolve(cwd, "node_modules/normalize.css/normalize.css");
             const preflightPath = path.join(__dirname, "preflight.css");
             data += fs.readFileSync(normalizePath).toString();
             data += fs.readFileSync(preflightPath).toString();
@@ -274,6 +288,7 @@ class CSSMonster {
                     {
                         file: file,
                         outputStyle: "expanded",
+                        includePaths: this.config.include,
                     },
                     (error, result) => {
                         if (error) {
