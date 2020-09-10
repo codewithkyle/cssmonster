@@ -237,33 +237,25 @@ class CSSMonster {
             for (let i = 0; i < files.length; i++) {
                 const filename = files[i].replace(/(.*\/)|(.*\\)/, "");
                 if (!fs.existsSync(`${this.tempDir}/${filename}`)) {
-                    fs.copyFile(files[i], `${this.tempDir}/${filename}`, (error) => {
-                        if (error) {
-                            reject(error);
-                        }
-                        movedFiles.push(`${this.tempDir}/${filename}`);
-                        count++;
-                        if (count === files.length) {
-                            resolve(movedFiles);
-                        }
-                    });
+                    fs.copyFileSync(files[i], `${this.tempDir}/${filename}`);
+                    movedFiles.push(`${this.tempDir}/${filename}`);
+                    count++;
+                    if (count === files.length) {
+                        resolve(movedFiles);
+                    }
                 } else {
                     if (this.config.autoresolve) {
                         const newFileData = fs.readFileSync(files[i]).toString();
                         let tempFileData = fs.readFileSync(`${this.tempDir}/${filename}`).toString();
                         tempFileData += "\n";
                         tempFileData += newFileData;
-                        fs.writeFile(`${this.tempDir}/${filename}`, tempFileData, (error) => {
-                            if (error) {
-                                reject(error);
-                            }
-                            count++;
-                            if (count === files.length) {
-                                resolve(movedFiles);
-                            }
-                        });
+                        fs.writeFileSync(`${this.tempDir}/${filename}`, tempFileData);
+                        count++;
+                        if (count === files.length) {
+                            resolve(movedFiles);
+                        }
                     } else {
-                        reject(`Two files have the same name "${filename}" rename one of the files or enable the CSSMonster autoresolve setting.`);
+                        reject(`Two css files have the same name "${filename}". Rename one of the files or enable the CSSMonster autoresolve setting.`);
                     }
                 }
             }
@@ -312,6 +304,7 @@ class CSSMonster {
                 resolve(files);
             }
             const compiledFiles = [];
+            let count = 0;
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 sass.render(
@@ -327,15 +320,27 @@ class CSSMonster {
                             let fileName = result.stats.entry.replace(/(.*\/)|(.*\\)/, "").replace(/(.scss)$/g, "");
                             if (fileName) {
                                 const newFile = `${this.tempDir}/${fileName}.css`;
-                                fs.writeFile(newFile, result.css.toString(), (error) => {
-                                    if (error) {
-                                        reject("Something went wrong saving the file" + error);
-                                    }
+                                if (!fs.existsSync(newFile)) {
+                                    fs.writeFileSync(newFile, result.css.toString());
                                     compiledFiles.push(newFile);
-                                    if (compiledFiles.length === files.length) {
+                                    count++;
+                                    if (count === files.length) {
                                         resolve(compiledFiles);
                                     }
-                                });
+                                } else {
+                                    if (this.config.autoresolve) {
+                                        let tempFileData = fs.readFileSync(newFile).toString();
+                                        tempFileData += "\n";
+                                        tempFileData += result.css.toString();
+                                        fs.writeFileSync(newFile, tempFileData);
+                                        count++;
+                                        if (count === files.length) {
+                                            resolve(compiledFiles);
+                                        }
+                                    } else {
+                                        reject(`Two scss files have the same name "${fileName}". Rename one of the files or enable the CSSMonster autoresolve setting.`);
+                                    }
+                                }
                             } else {
                                 reject("Something went wrong with the file name of " + result.stats.entry);
                             }
