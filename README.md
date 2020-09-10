@@ -27,9 +27,6 @@ Add the config file:
 ```javascript
 module.exports = {
     sources: "./src", // Also accepts an array
-    purgeCSS: {
-        content: ["./templates/**/*.html"],
-    },
 };
 ```
 
@@ -57,6 +54,7 @@ module.exports = {
     },
     blacklist: [],
     include: [], // Paths that will be included while compiling the SCSS
+    autoresolve: false, // when true files with the same name are merged together
 };
 ```
 

@@ -53,11 +53,10 @@ class CSSMonster {
             sources: [path.resolve(cwd, "src")],
             minify: true,
             purge: true,
-            purgeCSS: {
-                content: [path.resolve(cwd, "**/*.html")],
-            },
+            purgeCSS: null,
             blacklist: [],
             include: [],
+            autoresolve: false,
         };
         this.run();
     }
@@ -67,7 +66,7 @@ class CSSMonster {
             if (fs.existsSync(this.tempDir)) {
                 fs.rmdirSync(this.tempDir, { recursive: true });
             }
-            fs.mkdir(this.tempDir, error => {
+            fs.mkdir(this.tempDir, (error) => {
                 if (error) {
                     reject(error);
                 }
@@ -179,12 +178,21 @@ class CSSMonster {
                 }
             }
 
+            /** autoresolve */
+            if (typeof config.autoresolve !== "undefined") {
+                if (typeof config.autoresolve === "boolean") {
+                    this.config.autoresolve = config.autoresolve;
+                } else {
+                    reject("Incorrect configuration: autoresolve must be a boolean.");
+                }
+            }
+
             resolve();
         });
     }
 
     removeIgnored(files) {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             if (!files.length || !this.config.blacklist.length) {
                 resolve(files);
             }
@@ -225,17 +233,39 @@ class CSSMonster {
                 resolve(files);
             }
             const movedFiles = [];
+            let count = 0;
             for (let i = 0; i < files.length; i++) {
                 const filename = files[i].replace(/(.*\/)|(.*\\)/, "");
-                fs.copyFile(files[i], `${this.tempDir}/${filename}`, error => {
-                    if (error) {
-                        reject(error);
+                if (!fs.existsSync(`${this.tempDir}/${filename}`)) {
+                    fs.copyFile(files[i], `${this.tempDir}/${filename}`, (error) => {
+                        if (error) {
+                            reject(error);
+                        }
+                        movedFiles.push(`${this.tempDir}/${filename}`);
+                        count++;
+                        if (count === files.length) {
+                            resolve(movedFiles);
+                        }
+                    });
+                } else {
+                    if (this.config.autoresolve) {
+                        const newFileData = fs.readFileSync(files[i]).toString();
+                        let tempFileData = fs.readFileSync(`${this.tempDir}/${filename}`).toString();
+                        tempFileData += "\n";
+                        tempFileData += newFileData;
+                        fs.writeFile(`${this.tempDir}/${filename}`, tempFileData, (error) => {
+                            if (error) {
+                                reject(error);
+                            }
+                            count++;
+                            if (count === files.length) {
+                                resolve(movedFiles);
+                            }
+                        });
+                    } else {
+                        reject(`Two files have the same name "${filename}" rename one of the files or enable the CSSMonster autoresolve setting.`);
                     }
-                    movedFiles.push(`${this.tempDir}/${filename}`);
-                    if (movedFiles.length === files.length) {
-                        resolve(movedFiles);
-                    }
-                });
+                }
             }
         });
     }
@@ -253,7 +283,7 @@ class CSSMonster {
             if (fs.existsSync(`${this.tempDir}/normalize.css`)) {
                 fs.unlinkSync(`${this.tempDir}/normalize.css`);
             }
-            fs.writeFile(`${this.tempDir}/normalize.css`, data, error => {
+            fs.writeFile(`${this.tempDir}/normalize.css`, data, (error) => {
                 if (error) {
                     reject(error);
                 }
@@ -297,7 +327,7 @@ class CSSMonster {
                             let fileName = result.stats.entry.replace(/(.*\/)|(.*\\)/, "").replace(/(.scss)$/g, "");
                             if (fileName) {
                                 const newFile = `${this.tempDir}/${fileName}.css`;
-                                fs.writeFile(newFile, result.css.toString(), error => {
+                                fs.writeFile(newFile, result.css.toString(), (error) => {
                                     if (error) {
                                         reject("Something went wrong saving the file" + error);
                                     }
@@ -327,12 +357,12 @@ class CSSMonster {
                 let minified = 0;
                 for (let i = 0; i < files.length; i++) {
                     minify(files[i])
-                        .then(css => {
-                            fs.unlink(files[i], error => {
+                        .then((css) => {
+                            fs.unlink(files[i], (error) => {
                                 if (error) {
                                     reject(error);
                                 }
-                                fs.writeFile(files[i], css, error => {
+                                fs.writeFile(files[i], css, (error) => {
                                     if (error) {
                                         reject(error);
                                     }
@@ -343,7 +373,7 @@ class CSSMonster {
                                 });
                             });
                         })
-                        .catch(error => {
+                        .catch((error) => {
                             reject(error);
                         });
                 }
@@ -362,12 +392,12 @@ class CSSMonster {
         purgeCSSConfig.css = [`${this.tempDir}/**/*.css`];
         const purgecssResult = await new PurgeCSS().purge(purgeCSSConfig);
         const purgedFiles = [];
-        purgecssResult.forEach(result => {
-            fs.unlink(result.file, error => {
+        purgecssResult.forEach((result) => {
+            fs.unlink(result.file, (error) => {
                 if (error) {
                     throw error;
                 }
-                fs.writeFile(result.file, result.css, error => {
+                fs.writeFile(result.file, result.css, (error) => {
                     if (error) {
                         throw error;
                     }
@@ -385,7 +415,7 @@ class CSSMonster {
             if (fs.existsSync(this.config.outDir)) {
                 fs.rmdirSync(this.config.outDir, { recursive: true });
             }
-            fs.rename(this.tempDir, this.config.outDir, error => {
+            fs.rename(this.tempDir, this.config.outDir, (error) => {
                 if (error) {
                     reject(error);
                 }
@@ -395,7 +425,7 @@ class CSSMonster {
     }
 
     cleanup() {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             if (fs.existsSync(this.tempDir)) {
                 fs.rmdirSync(this.tempDir, { recursive: true });
             }
