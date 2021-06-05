@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2021-06-05
+
+### Updated
+
+- [node-sass](https://github.com/sass/node-sass/releases/tag/v6.0.0) to v6.0.0
+- [minify](https://github.com/coderaiser/minify/releases/tag/v7.0.2) to v7.0.2
+- [purgecss](https://github.com/FullHuman/purgecss/releases/tag/v4.0.0) to v4.0.3
+
+### Fixed
+
+- `purge` config value now defaults to `false`
+
 ## [0.3.1] - 2020-09-10
 
 ### Added
@@ -56,7 +68,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   Developers can disable `purgeCSS`
 -   CLI consumes user provided config file
 
-[unreleased]: https://github.com/codewithkyle/cssmonster/compare/v0.3.0...HEAD
+[unreleased]: https://github.com/codewithkyle/cssmonster/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/codewithkyle/cssmonster/compare/v0.3.1...v0.4.0
 [0.3.0]: https://github.com/codewithkyle/cssmonster/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/codewithkyle/cssmonster/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/codewithkyle/cssmonster/compare/v0.1.1...v0.2.0

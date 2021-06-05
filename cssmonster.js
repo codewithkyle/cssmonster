@@ -52,7 +52,7 @@ class CSSMonster {
             outDir: path.resolve(cwd, "cssmonster"),
             sources: [path.resolve(cwd, "src")],
             minify: true,
-            purge: true,
+            purge: false,
             purgeCSS: null,
             blacklist: [],
             include: [],
@@ -463,7 +463,7 @@ class CSSMonster {
             await this.normalizeCSS();
 
             /** PurgeCSS */
-            if (this.config.purge) {
+            if (this.config.purge && this.config.purgeCSS !== null) {
                 spinner.text = "Purging CSS";
                 await this.commenceThePurge();
             }
