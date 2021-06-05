@@ -33,7 +33,7 @@ module.exports = {
 Run the command:
 
 ```bash
-npm run exmaple
+npm run build:css
 ```
 
 ## Configuration
