@@ -16,7 +16,7 @@ Prepare the npm script:
 
 ```json
 "scripts": {
-    "exmaple": "cssmonster"
+    "build:css": "cssmonster"
 }
 ```
 
