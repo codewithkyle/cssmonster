@@ -47,11 +47,9 @@ module.exports = {
     env: "production", // Accepts 'production' or 'dev' or 'development', is overridden by the --env flag
     outDir: "cssmonster",
     sources: "./src", // Also accepts an array
-    minify: true, // Forced to false when env is 'dev' or 'development', setting to false disables on production
-    purge: true, // Forced to false when env is 'dev' or 'development', setting to false disables on produciton
-    purgeCSS: {
-        content: ["**/*.html"],
-    },
+    minify: true, // Forced to false when env is 'dev' or 'development' -- setting to false disables on production
+    purge: false, // Forced to false when env is 'dev' or 'development' -- setting to false disables on produciton
+    purgeCSS:  null,
     blacklist: [],
     include: [], // Paths that will be included while compiling the SCSS
     autoresolve: false, // when true files with the same name are merged together
