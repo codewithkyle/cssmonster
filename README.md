@@ -1,15 +1,15 @@
 # CSSMonster
 
-CSSMonster helps developers manage [normalize.css](https://www.npmjs.com/package/normalize.css?activeTab=versions), [node-sass](https://www.npmjs.com/package/node-sass), and [PurgeCSS](https://www.npmjs.com/package/purgecss) with ease.
+CSSMonster helps developers manage [normalize.css](https://www.npmjs.com/package/normalize.css?activeTab=versions), [sass](https://www.npmjs.com/package/sass), and [PurgeCSS](https://www.npmjs.com/package/purgecss) with ease.
 
 Requries Nodejs version [12.10.0](https://nodejs.org/en/download/) or later.
 
 ## Installation
 
-Install:
+Install the NPM packages:
 
 ```bash
-npm i --save cssmonster
+npm i -D cssmonster sass@1
 ```
 
 Prepare the npm script:
@@ -49,7 +49,7 @@ module.exports = {
     sources: "./src", // Also accepts an array
     minify: true, // Forced to false when env is 'dev' or 'development' -- setting to false disables on production
     purge: false, // Forced to false when env is 'dev' or 'development' -- setting to false disables on produciton
-    purgeCSS:  null,
+    purgeCSS: null,
     blacklist: [],
     include: [], // Paths that will be included while compiling the SCSS
     autoresolve: false, // when true files with the same name are merged together
