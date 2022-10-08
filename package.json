@@ -1,6 +1,6 @@
 {
     "name": "cssmonster",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "description": "CSSMonster helps developers manage normalize.css, node-sass, and purgeCSS with ease.",
     "main": "cssmonster.js",
     "author": "Kyle Andrews",
@@ -9,12 +9,9 @@
         "cssmonster": "./cssmonster.js"
     },
     "engines": {
-        "node": ">=12.10.0"
+        "node": ">=16.0.0"
     },
-    "files": [
-        "cssmonster.js",
-        "preflight.css"
-    ],
+    "files": ["cssmonster.js", "preflight.css"],
     "dependencies": {
         "glob": "^7.2.0",
         "minify": "^7.2.2",
