@@ -61,18 +61,11 @@ class CSSMonster {
         this.run();
     }
 
-    reset() {
-        return new Promise((resolve, reject) => {
-            if (fs.existsSync(this.tempDir)) {
-                fs.rmdirSync(this.tempDir, { recursive: true });
-            }
-            fs.mkdir(this.tempDir, (error) => {
-                if (error) {
-                    reject(error);
-                }
-                resolve();
-            });
-        });
+    async reset() {
+        if (fs.existsSync(this.tempDir)) {
+            await fs.promises.rm(this.tempDir, { recursive: true });
+        }
+        await fs.promises.mkdir(this.tempDir);
     }
 
     handleConfig() {
@@ -415,27 +408,17 @@ class CSSMonster {
         });
     }
 
-    deliverCSS() {
-        return new Promise((resolve, reject) => {
-            if (fs.existsSync(this.config.outDir)) {
-                fs.rmdirSync(this.config.outDir, { recursive: true });
-            }
-            fs.rename(this.tempDir, this.config.outDir, (error) => {
-                if (error) {
-                    reject(error);
-                }
-                resolve();
-            });
-        });
+    async deliverCSS() {
+        if (fs.existsSync(this.config.outDir)) {
+            await fs.promises.rm(this.config.outDir, { recursive: true });
+        }
+        await fs.promises.rename(this.tempDir, this.config.outDir);
     }
 
-    cleanup() {
-        return new Promise((resolve) => {
-            if (fs.existsSync(this.tempDir)) {
-                fs.rmdirSync(this.tempDir, { recursive: true });
-            }
-            resolve();
-        });
+    async cleanup() {
+        if (fs.existsSync(this.tempDir)) {
+            await fs.process.rm(this.tempDir, { recursive: true });
+        }
     }
 
     async run() {
