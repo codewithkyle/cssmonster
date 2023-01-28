@@ -1,10 +1,11 @@
 {
     "name": "cssmonster",
-    "version": "0.7.0",
+    "version": "0.7.1",
     "description": "CSSMonster helps developers manage normalize.css, node-sass, and purgeCSS with ease.",
     "main": "cssmonster.js",
     "author": "Kyle Andrews",
     "license": "MIT",
+    "type": "module",
     "bin": {
         "cssmonster": "./cssmonster.js"
     },

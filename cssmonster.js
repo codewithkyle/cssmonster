@@ -1,19 +1,23 @@
 #!/usr/bin/env node
 
-const fs = require("fs");
-const path = require("path");
-const glob = require("glob");
-const semver = require("semver");
-const sass = require("sass");
-const yargs = require("yargs").argv;
-const minify = require("minify");
-const ora = require("ora");
-const PurgeCSS = require("purgecss").PurgeCSS;
+import fs from "fs";
+import path from "path";
+import glob from "glob";
+import semver from "semver";
+import sass from "sass";
+import yargs from "yargs";
+import { minify } from "minify";
+import ora from "ora";
+import PurgeCSS from "purgecss";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const cwd = process.cwd();
 
 /** Verify Nodejs version */
-const packageJson = require(path.join(__dirname, "package.json"));
+const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, "package.json"), "utf8"));
 const version = packageJson.engines.node;
 if (!semver.satisfies(process.version, version)) {
     const rawVersion = version.replace(/[^\d\.]*/, "");
@@ -40,7 +44,10 @@ if (configFile) {
     }
 }
 
-const config = require(configPath) || null;
+let config = fs.readFileSync(configPath, "utf8") || null;
+if (config !== null) {
+    config = JSON.parse(config);
+}
 let mode = yargs.e || yargs.env || "production";
 
 /** Output CSS */
