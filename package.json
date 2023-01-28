@@ -18,15 +18,13 @@
     "dependencies": {
         "glob": "^7.2.0",
         "normalize.css": "^8.0.1",
-        "ora": "^4.1.1"
-    },
-    "peerDependencies": {
-        "sass": "1.x"
-    },
-    "devDependencies": {
+        "ora": "^4.1.1",
         "minify": "^9.2.0",
         "purgecss": "^5.0.0",
         "semver": "^7.3.8",
         "yargs": "^17.6.2"
+    },
+    "peerDependencies": {
+        "sass": "1.x"
     }
 }
