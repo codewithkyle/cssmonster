@@ -35,9 +35,9 @@ if (configFile) {
         process.exit(1);
     }
 } else {
-    configPath = path.join(cwd, "cssmonster.js");
+    configPath = path.join(cwd, "cssmonster.json");
     if (!fs.existsSync(configPath)) {
-        configPath = path.join(cwd, "cssmonster.config.js");
+        configPath = path.join(cwd, "cssmonster.config.json");
         if (!fs.existsSync(configPath)) {
             configPath = null;
         }
@@ -46,7 +46,12 @@ if (configFile) {
 
 let config = fs.readFileSync(configPath, "utf8") || null;
 if (config !== null) {
-    config = JSON.parse(config);
+    try{
+        config = JSON.parse(config);
+    } catch (e) {
+        console.log(`Error parsing config file: ${e}`);
+        process.exit(1);
+    }
 }
 let mode = yargs.e || yargs.env || "production";
 

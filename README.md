@@ -22,12 +22,12 @@ Prepare the npm script:
 
 Add the config file:
 
-#### cssmonster.config.js
+#### cssmonster.config.json
 
-```javascript
-module.exports = {
-    sources: "./src", // Also accepts an array
-};
+```json
+{
+    "sources": "./src", // Also accepts an array
+}
 ```
 
 Run the command:
@@ -40,20 +40,33 @@ npm run build:css
 
 Out of the box CSSMonster does not require a config file. The exmample below will show the default values.
 
-#### cssmonster.config.js
+#### cssmonster.config.json
 
-```javascript
-module.exports = {
-    env: "production", // Accepts 'production' or 'dev' or 'development', is overridden by the --env flag
-    outDir: "cssmonster",
-    sources: "./src", // Also accepts an array
-    minify: true, // Forced to false when env is 'dev' or 'development' -- setting to false disables on production
-    purge: false, // Forced to false when env is 'dev' or 'development' -- setting to false disables on produciton
-    purgeCSS: null,
-    blacklist: [],
-    include: [], // Paths that will be included while compiling the SCSS
-    autoresolve: false, // when true files with the same name are merged together
-};
+```json
+{
+    // Accepts 'production' or 'dev' or 'development', is overridden by the --env flag
+    "env": "production", 
+    
+    "outDir": "cssmonster",
+
+    // Also accepts an array
+    "sources": "./src",
+
+    // Forced to false when env is 'dev' or 'development' -- setting to false disables on production
+    "minify": true,
+
+    // Forced to false when env is 'dev' or 'development' -- setting to false disables on produciton
+    "purge": false,
+
+    "purgeCSS": null,
+    "blacklist": [],
+
+    // Paths that will be included while compiling the SCSS
+    "include": [],
+
+    // when true files with the same name are merged together
+    "autoresolve": false,
+}
 ```
 
 > Note: `purgeCSS` accepts the purgecss options object. See https://www.purgecss.com/configuration#options for additional information.
