@@ -2,7 +2,7 @@
 
 CSSMonster helps developers manage [normalize.css](https://www.npmjs.com/package/normalize.css?activeTab=versions), [sass](https://www.npmjs.com/package/sass), and [PurgeCSS](https://www.npmjs.com/package/purgecss) with ease.
 
-Requries Nodejs version [12.10.0](https://nodejs.org/en/download/) or later.
+Requries Nodejs version [16.0.0](https://nodejs.org/en/download/) or later.
 
 ## Installation
 
