@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.3] - 2023-07-29
+
+### Fixed
+
+- SASS import warnings
+
+## [0.7.0] - 2023-01-28
+
+### Updated
+
+- NPM packages (new major versions)
+- Switched to ES Module imports (internal, required by minify)
+- Switched from JavaScript to JSON for config file formats ([see readme](https://github.com/codewithkyle/cssmonster#readme))
+
 ## [0.5.0] - 2021-12-22
 
 ### ⚠ Breaking Changes ⚠
@@ -78,7 +92,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   Developers can disable `purgeCSS`
 -   CLI consumes user provided config file
 
-[unreleased]: https://github.com/codewithkyle/cssmonster/compare/v0.5.0...HEAD
+[unreleased]: https://github.com/codewithkyle/cssmonster/compare/v0.7.3...HEAD
+[0.7.3]: https://github.com/codewithkyle/cssmonster/compare/v0.7.0...v0.7.3
+[0.7.0]: https://github.com/codewithkyle/cssmonster/compare/v0.5.0...v0.7.0
 [0.5.0]: https://github.com/codewithkyle/cssmonster/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/codewithkyle/cssmonster/compare/v0.3.1...v0.4.0
 [0.3.0]: https://github.com/codewithkyle/cssmonster/compare/v0.2.1...v0.3.0
