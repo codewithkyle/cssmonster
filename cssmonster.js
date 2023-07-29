@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 import glob from "glob";
 import semver from "semver";
-import sass from "sass";
+import * as sass from "sass";
 import yargs from "yargs";
 import { minify } from "minify";
 import ora from "ora";
